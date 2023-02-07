@@ -38,18 +38,30 @@ select selected_video_device in $video_devices; do
   break
 done
 
+date=`date +"%Y/%m/%d"`
+datetime=`date +"%Y/%m/%d/%H-%M-%S"`
+mkdir -p ~/.focup/records/raw/$date
+mkdir -p ~/.focup/records/$date
+
 ffmpeg -f avfoundation \
        -r 30 \
        -pix_fmt uyvy422 \
        -i $main_video_device \
        -f avfoundation \
        -video_size 1280x720 \
-       -framerate 60 \
+       -r 60 \
        -pix_fmt uyvy422 \
        -i $sub_video_device \
-       -filter_complex "[1:v]vflip, hflip[tmp]; [0:v][tmp]overlay=x=0:y=0, setpts=PTS/5.0" \
+       -filter_complex "[1:v]vflip, hflip[tmp]; [0:v][tmp]overlay=x=0:y=0" \
        -preset ultrafast \
        -c:v libx264 \
        -f mp4 \
        -loglevel warning \
-       $1.mp4
+       ~/.focup/records/raw/$datetime.mp4
+
+ffmpeg -r:v 3000 \
+       -i ~/.focup/records/raw/$datetime.mp4 \
+       -r:v 30 \
+       ~/.focup/records/$datetime.mp4
+
+rm ~/.focup/records/raw/$datetime.mp4
